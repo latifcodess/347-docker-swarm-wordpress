@@ -5,8 +5,8 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./nginxv/conf.d/:/etc/nginx/conf.d/
-      - ./wordpressv:/var/www/html
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./wordpress:/var/www/html
 
   db:
     container_name: mariadb
@@ -14,7 +14,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./mariadbv/data:/var/lib/mysql
+      - ./mariadb/data:/var/lib/mysql
     environment:
       - MARIADB_ROOT_PASSWORD=root
       - MARIADB_DATABASE=appdb
@@ -32,4 +32,4 @@ services:
       - WORDPRESS_DB_PASSWORD=user
       - WORDPRESS_DB_NAME=appdb
     volumes:
-      - ./wordpressv:/var/www/html
+      - ./wordpress:/var/www/html

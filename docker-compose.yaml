@@ -6,20 +6,23 @@ services:
       - "8080:80"                           # publication et redirection du port 8080 (local) vers le port 80 (docker)
     volumes:
       - ./nginx/conf.d/:/etc/nginx/conf.d/  # volume pour la config nginx
-      - ./wordpress:/var/www/html           # volume pour que nginx ait accès aux fichiers wordpress
+      - wordpress_data:/var/www/html         # volume pour que nginx ait accès aux fichiers wordpress
+    networks:
+      - frontend                            # fais partie du reseau frontend
+      - backend                             # fais partie du reseau backend
 
   db:
     container_name: mariadb             # nom du container
     image: mariadb:12.3.3               # image docker utilisé pour mariadb
-    ports:
-      - "3306:3306"                     # publication et redirection du port 3306 (local) vers le port 3306 (docker)
     volumes:
-      - ./mariadb/data:/var/lib/mysql   # volume pour stocker les données mariadb
+      - mariadb_data:/var/lib/mysql   # volume pour stocker les données mariadb
     environment:
       - MARIADB_ROOT_PASSWORD=root      # mot de passe root de mariadb
       - MARIADB_DATABASE=appdb          # nom de la db crée et utilisé par wordpress
       - MARIADB_USER=user               # utilisateur de la db sur l'app
       - MARIADB_PASSWORD=user           # son mot de passe
+    networks:
+      - backend
     
   wordpress:
     container_name: wordpress                 # nom du container
@@ -32,4 +35,14 @@ services:
       - WORDPRESS_DB_PASSWORD=user            # son mot de passe
       - WORDPRESS_DB_NAME=appdb               # nom de la db
     volumes:
-      - ./wordpress:/var/www/html             # volume pour la persistance des fichiers de code wordpress (volume partagé avec ngnix)
+      - wordpress_data:/var/www/html             # volume pour la persistance des fichiers de code wordpress (volume partagé avec ngnix)
+    networks:
+      - backend
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  wordpress_data:
+  mariadb_data:

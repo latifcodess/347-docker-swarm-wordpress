@@ -18,18 +18,18 @@ services:
     environment:
       - MARIADB_ROOT_PASSWORD=root      # mot de passe root de mariadb
       - MARIADB_DATABASE=appdb          # nom de la db crée et utilisé par wordpress
-      - MARIADB_USER=user               #
-      - MARIADB_PASSWORD=user           #
+      - MARIADB_USER=user               # utilisateur de la db sur l'app
+      - MARIADB_PASSWORD=user           # son mot de passe
     
   wordpress:
-    container_name: wordpress
-    image: wordpress:7.1.0-php8.3-fpm-alpine
+    container_name: wordpress                 # nom du container
+    image: wordpress:7.1.0-php8.3-fpm-alpine  # image docker utilisé pour wordpress
     depends_on:
-      - db
+      - db                                    # le container wordpress depend du container db pour demarrer
     environment:
-      - WORDPRESS_DB_HOST=db:3306
-      - WORDPRESS_DB_USER=user
-      - WORDPRESS_DB_PASSWORD=user
-      - WORDPRESS_DB_NAME=appdb
+      - WORDPRESS_DB_HOST=db:3306             # port utilisé pour acceder à la db
+      - WORDPRESS_DB_USER=user                # utilisateur de la db sur l'app
+      - WORDPRESS_DB_PASSWORD=user            # son mot de passe
+      - WORDPRESS_DB_NAME=appdb               # nom de la db
     volumes:
-      - ./wordpress:/var/www/html
+      - ./wordpress:/var/www/html             # volume pour la persistance des fichiers de code wordpress (volume partagé avec ngnix)

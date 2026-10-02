@@ -3,13 +3,19 @@ services:
     container_name: nginx                   # nom du container
     image: nginx:1.30.4-alpine3.24          # image docker utilisé pour nginx
     ports:
-      - "8080:80"                           # publication et redirection du port 8080 (local) vers le port 80 (docker)
+      - "80:80"                           # publication et redirection du port 8080 (local) vers le port 80 (docker)
     volumes:
-      - ./nginx/conf.d/:/etc/nginx/conf.d/  # volume pour la config nginx
-      - wordpress_data:/var/www/html        # volume pour que nginx ait accès aux fichiers wordpress
+      - wp_volume:/var/www/html        # volume pour que nginx ait accès aux fichiers wordpress
     networks:
       - frontend                            # fais partie du reseau frontend
       - backend                             # fais partie du reseau backend
+    deploy: 
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    configs:
+      - source: nginx_config
+        target: /etc/nginx/conf.d/default.conf
 
   db:
     container_name: mariadb             # nom du container
@@ -23,6 +29,13 @@ services:
       - MARIADB_PASSWORD=user           # son mot de passe
     networks:
       - backend                         # fais partie du réseau backend
+    deploy: 
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
     
   wordpress:
     container_name: wordpress                 # nom du container
@@ -38,6 +51,10 @@ services:
       - wp_volume:/var/www/html               # volume pour la persistance des fichiers de code wordpress (volume partagé avec ngnix)
     networks:
       - backend                               # fais partie du réseau backend
+    deploy: 
+      replicas: 2
+      restart_policy:
+        condition: on-failure
 
 networks:
   frontend: # déclaration du réseau frontend
@@ -45,9 +62,13 @@ networks:
 
 volumes:
   wp_volume:
-    driver: local                     # emplacement du driver
+    driver: local                       # emplacement du driver
     driver_opts:
-      type: nfs                       # type du driver
-      o: addr=172.26.1.5              # ip du serveur nfs
-      device: :/var/nfs_share/srv02   # chemin du dossier nfs
-    db_volume:  
+      type: nfs                         # type du driver
+      o: addr=172.26.1.5,rw,nfsvers=4   # ip du serveur nfs
+      device: :/var/nfs_share/nfs02     # chemin du dossier nfs
+  db_volume:  
+
+configs:
+  nginx_config:
+    file: ./nginx/conf.d/default.conf

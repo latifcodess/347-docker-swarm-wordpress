@@ -6,7 +6,7 @@ services:
       - "8080:80"                           # publication et redirection du port 8080 (local) vers le port 80 (docker)
     volumes:
       - ./nginx/conf.d/:/etc/nginx/conf.d/  # volume pour la config nginx
-      - wordpress_data:/var/www/html         # volume pour que nginx ait accès aux fichiers wordpress
+      - wordpress_data:/var/www/html        # volume pour que nginx ait accès aux fichiers wordpress
     networks:
       - frontend                            # fais partie du reseau frontend
       - backend                             # fais partie du reseau backend
@@ -15,7 +15,7 @@ services:
     container_name: mariadb             # nom du container
     image: mariadb:12.3.3               # image docker utilisé pour mariadb
     volumes:
-      - mariadb_data:/var/lib/mysql   # volume pour stocker les données mariadb
+      - db_volume:/var/lib/mysql        # volume pour stocker les données mariadb
     environment:
       - MARIADB_ROOT_PASSWORD=root      # mot de passe root de mariadb
       - MARIADB_DATABASE=appdb          # nom de la db crée et utilisé par wordpress
@@ -35,7 +35,7 @@ services:
       - WORDPRESS_DB_PASSWORD=user            # son mot de passe
       - WORDPRESS_DB_NAME=appdb               # nom de la db
     volumes:
-      - wordpress_data:/var/www/html          # volume pour la persistance des fichiers de code wordpress (volume partagé avec ngnix)
+      - wp_volume:/var/www/html               # volume pour la persistance des fichiers de code wordpress (volume partagé avec ngnix)
     networks:
       - backend                               # fais partie du réseau backend
 
@@ -44,5 +44,10 @@ networks:
   backend:  # déclaration du réseau backend
 
 volumes:
-  wordpress_data: # déclaration du volume nommé wordpress_data
-  mariadb_data:   # déclaration du volume nommé mariadb_data
+  wp_volume:
+    driver: local                     # emplacement du driver
+    driver_opts:
+      type: nfs                       # type du driver
+      o: addr=172.26.1.5              # ip du serveur nfs
+      device: :/var/nfs_share/srv02   # chemin du dossier nfs
+    db_volume:  

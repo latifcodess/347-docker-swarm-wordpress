@@ -4,7 +4,7 @@ services:
     ports:
       - "80:80"                                 # publication et redirection du port 8080 (local) vers le port 80 (docker)
     volumes:
-      - wp_volume:/var/www/html                 # volume pour que nginx ait accès aux fichiers wordpress
+      - wp_volume:/var/www/html:ro              # volume pour que nginx ait accès aux fichiers wordpress
     networks:
       - frontend                                # fais partie du reseau frontend
     deploy: 

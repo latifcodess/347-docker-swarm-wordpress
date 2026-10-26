@@ -43,8 +43,6 @@ services:
     
   wordpress:
     image: wordpress:7.1.0-php8.3-fpm-alpine  # image docker utilisé pour wordpress
-    depends_on:
-      - db                                    # le container wordpress depend du container db pour demarrer
     environment:
       - WORDPRESS_DB_HOST=db:3306                              # port utilisé pour acceder à la db
       - WORDPRESS_DB_USER=user                                 # utilisateur de la db sur l'app

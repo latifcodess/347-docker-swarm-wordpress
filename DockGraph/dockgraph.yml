@@ -1,0 +1,75 @@
+services:
+
+  server:
+    image: registry.matinfo.ch/dockgraph:0.4-swarm
+    ports:
+      - "7800:7800"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      DG_MODE: "swarm"
+      DG_PORT: "7800"
+      DG_AGENT_ADDR: "tasks.agent"
+      DG_AGENT_PORT: "7801"
+      DG_AGENT_TOKEN_FILE: "/run/secrets/dg_agent_token"
+      DG_PASSWORD_FILE: "/run/secrets/dg_password"
+    secrets:
+      - dg_agent_token
+      - dg_password
+    networks:
+      - internal
+    labels:
+      dockgraph.self: "true"
+    deploy:
+      replicas: 1
+      labels:
+        dockgraph.self: "true"
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
+        delay: 5s
+      update_config:
+        order: stop-first
+      resources:
+        limits:
+          cpus: "1"
+          memory: 256M
+
+  agent:
+    image: registry.matinfo.ch/dockgraph:0.4-swarm
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      DG_MODE: "agent"
+      DG_AGENT_PORT: "7801"
+      DG_AGENT_TOKEN_FILE: "/run/secrets/dg_agent_token"
+    secrets:
+      - dg_agent_token
+    networks:
+      - internal
+    labels:
+      dockgraph.self: "true"
+    deploy:
+      mode: global
+      labels:
+        dockgraph.self: "true"
+      restart_policy:
+        condition: any
+        delay: 5s
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+networks:
+  internal:
+    driver: overlay
+    attachable: false
+
+secrets:
+  dg_agent_token:
+    external: true
+  dg_password:
+    external: true

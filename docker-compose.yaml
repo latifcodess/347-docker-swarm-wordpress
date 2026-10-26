@@ -1,62 +1,62 @@
 services:
   nginx:
-    image: nginx:1.30.4-alpine3.24          # image docker utilisé pour nginx
+    image: nginx:1.30.4-alpine3.24              # version nginx imposé par le cdc
     ports:
-      - "80:80"                           # publication et redirection du port 8080 (local) vers le port 80 (docker)
+      - "80:80"                                 # publication et redirection du port 8080 (local) vers le port 80 (docker)
     volumes:
-      - wp_volume:/var/www/html        # volume pour que nginx ait accès aux fichiers wordpress
+      - wp_volume:/var/www/html                 # volume pour que nginx ait accès aux fichiers wordpress
     networks:
-      - frontend                            # fais partie du reseau frontend
+      - frontend                                # fais partie du reseau frontend
     deploy: 
-      replicas: 2
+      replicas: 2                               # crée 2 réplique du service repartis entre les vm
       restart_policy:
-        condition: on-failure
+        condition: on-failure                   # relance le service si en erreur 
     configs:
-      - source: nginx_config
-        target: /etc/nginx/conf.d/default.conf
+      - source: nginx_config                    # appelle la config
+        target: /etc/nginx/conf.d/default.conf  # endroit ou placer la config
 
   db:
-    image: mariadb:12.3.3               # image docker utilisé pour mariadb
+    image: mariadb:12.3.3           # image docker utilisé pour mariadb
     volumes:
-      - db_volume:/var/lib/mysql        # volume pour stocker les données mariadb
+      - db_volume:/var/lib/mysql    # volume pour assurer la persistance des données de la db
     environment:
-      - MARIADB_ROOT_PASSWORD=/run/secrets/db_root_password      # mot de passe root de mariadb
-      - MARIADB_DATABASE=appdb                                   # nom de la db crée et utilisé par wordpress
-      - MARIADB_USER=user                                        # utilisateur de la db sur l'app
-      - MARIADB_PASSWORD=/run/secrets/db_password                # son mot de passe
+      - MARIADB_ROOT_PASSWORD=/run/secrets/db_root_password           # mot de passe root de mariadb
+      - MARIADB_DATABASE=appdb                                        # nom de la db crée et utilisé par wordpress
+      - MARIADB_USER=user                                             # utilisateur de la db sur l'app
+      - MARIADB_PASSWORD=/run/secrets/db_password                     # son mot de passe
     networks:
-      - backend                         # fais partie du réseau backend
+      - backend                     # fais partie du reseau backend pour communiquer avec wordpress
     deploy: 
-      replicas: 1
+      replicas: 1                   # crée une seul replique de ce service
       placement:
         constraints:
-          - node.role == manager
+          - node.role == manager    # ce service doit obligatoirement etre dans un node manager
       restart_policy:
-        condition: on-failure
+        condition: on-failure       # relance le service si en erreur 
     secrets:
-      - db_root_password
-      - db_password
+      - db_root_password            # utilise le secret db_root_password
+      - db_password                 # rend le secret disponible dans /run/secrets/ du conteneur
     
   wordpress:
     image: wordpress:7.1.0-php8.3-fpm-alpine  # image docker utilisé pour wordpress
     depends_on:
       - db                                    # le container wordpress depend du container db pour demarrer
     environment:
-      - WORDPRESS_DB_HOST=db:3306                         # port utilisé pour acceder à la db
-      - WORDPRESS_DB_USER=user                            # utilisateur de la db sur l'app
-      - WORDPRESS_DB_PASSWORD=/run/secrets/db_password    # son mot de passe
-      - WORDPRESS_DB_NAME=appdb                           # nom de la db
+      - WORDPRESS_DB_HOST=db:3306                              # port utilisé pour acceder à la db
+      - WORDPRESS_DB_USER=user                                 # utilisateur de la db sur l'app
+      - WORDPRESS_DB_PASSWORD=/run/secrets/db_password         # son mot de passe
+      - WORDPRESS_DB_NAME=appdb                                # nom de la db
     volumes:
       - wp_volume:/var/www/html               # volume pour la persistance des fichiers de code wordpress (volume partagé avec ngnix)
     networks:
-      - backend                               # fais partie du réseau backend
-      - frontend
+      - backend                               # fais partie du réseau backend pour communiquer avec la db
+      - frontend                              # fais partie du réseau frontend pour communiquer avec nginx
     deploy: 
-      replicas: 2
+      replicas: 2                             # crée 2 réplique du service repartis entre les vm
       restart_policy:
-        condition: on-failure
+        condition: on-failure                 # relance le service si en erreur 
     secrets:
-      - db_password
+      - db_password                           # rend le secret disponible dans /run/secrets/ du conteneur
 
 networks:
   frontend: # déclaration du réseau frontend
@@ -73,10 +73,10 @@ volumes:
 
 configs:
   nginx_config:
-    file: ./nginx/conf.d/default.conf
+    file: ./nginx/conf.d/default.conf   # fichier pris dans le dépôt au déploiement
 
 secrets:
-  db_root_password:
+  db_root_password:   # mot de passe root de mariadb, créé avant le déploiement avec docker secret
     external: true
-  db_password:
+  db_password:        # mot de passe de l'utilisateur de l'app, utilisé par db et par wordpress
     external: true

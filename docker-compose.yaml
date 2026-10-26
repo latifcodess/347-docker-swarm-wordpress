@@ -10,7 +10,11 @@ services:
     deploy: 
       replicas: 2                               # crée 2 réplique du service repartis entre les vm
       restart_policy:
-        condition: on-failure                   # relance le service si en erreur 
+        condition: on-failure                   # relance le service si en erreur
+      placement:
+        constraints:
+          - node.role == worker
+        max_replicas_per_node: 1
     configs:
       - source: nginx_config                    # appelle la config
         target: /etc/nginx/conf.d/default.conf  # endroit ou placer la config
@@ -55,6 +59,10 @@ services:
       replicas: 2                             # crée 2 réplique du service repartis entre les vm
       restart_policy:
         condition: on-failure                 # relance le service si en erreur 
+      placement:
+        constraints:
+          - node.role == worker
+        max_replicas_per_node: 1
     secrets:
       - db_password                           # rend le secret disponible dans /run/secrets/ du conteneur
 
